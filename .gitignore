@@ -1,0 +1,6 @@
+.terraform/         # Terraform 관련 로컬 캐시 디렉토리
+*.tfstate           # Terraform 상태 파일
+*.tfstate.* # Terraform 상태 파일 백업
+*.tfplan            # Terraform 계획 파일
+.terraform.lock.hcl # Terraform 프로바이더 잠금 파일
+terraform.tfvars    # 변수 값 파일 (민감 정보 포함 가능성)
