@@ -2,7 +2,7 @@
 # -- 이 부분은 Helm Chart의 기본 설정이다. --
 image:
   repository: quay.io/rook/ceph
-  tag: v1.19.1
+  tag: v1.18.9
   pullPolicy: IfNotPresent
 crds:
   enabled: true
