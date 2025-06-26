@@ -1,5 +1,5 @@
 # Default values for rook-ceph-operator
-# 이 파일은 Helm Chart의 기본 설정과 커스텀 설정을 모두 포함합니다.
+# 이 파일은 Helm Chart의 기본 설정과 커스텀 설정을 모두 포함.
 
 image:
   repository: docker.io/rook/ceph
@@ -37,44 +37,28 @@ containerSecurityContext:
     drop: ["ALL"]
 allowLoopDevices: false
 
-# Settings for whether to disable the drivers or other daemons
+# -- CSI 드라이버 및 사이드카 설정
 csi:
+  # -- Enable Ceph CSI RBD driver
   enableRbdDriver: true
+  # -- Enable Ceph CSI CephFS driver
   enableCephfsDriver: true
+  # -- Disable the CSI driver.
   disableCsiDriver: "false"
+
+  # -- Enable host networking for CSI CephFS and RBD nodeplugins.
   enableCSIHostNetwork: true
+  # -- Enable Snapshotter in CSI provisioner pods
   enableCephfsSnapshotter: true
   enableNFSSnapshotter: true
   enableRBDSnapshotter: true
-  enablePluginSelinuxHostMount: false
-  enableCSIEncryption: false
-  enableVolumeGroupSnapshot: true
-  pluginPriorityClassName: system-node-critical
-  provisionerPriorityClassName: system-cluster-critical
-  rbdFSGroupPolicy: "File"
-  cephFSFSGroupPolicy: "File"
-  nfsFSGroupPolicy: "File"
-  enableOMAPGenerator: false
-  cephFSKernelMountOptions:
-  enableMetadata: false
-  provisionerReplicas: 2
-  clusterName:
-  logLevel: 0
-  sidecarLogLevel:
-  csiDriverNamePrefix:
-  rbdPluginUpdateStrategy:
-  rbdPluginUpdateStrategyMaxUnavailable:
-  cephFSPluginUpdateStrategy:
-  cephFSPluginUpdateStrategyMaxUnavailable:
-  nfsPluginUpdateStrategy:
-  grpcTimeoutInSeconds: 150
-  kubeApiBurst:
-  kubeApiQPS:
-  csiRBDPluginVolume:
-  csiRBDPluginVolumeMount:
-  csiCephFSPluginVolume:
-  csiCephFSPluginVolumeMount:
-  # 아래 리소스 설정들은 사용자의 환경에 맞게 추가된 내용입니다.
+  # ... (csi 섹션의 다른 설정들) ...
+
+  # -- NFS CSI Driver 설정 (이 부분이 'csi' 블록 안으로 이동했습니다)
+  nfs: # <-- 'nfs' 섹션의 위치를 수정
+    enabled: false # <-- Kibana 구성에 필요 없다면 false로 둡니다.
+
+  # -- CEPH CSI RBD provisioner resource requirement list
   csiRBDProvisionerResource: |
     - name : csi-provisioner
       resource:
@@ -237,7 +221,7 @@ csi:
   rbdAttachRequired: true
   nfsAttachRequired: true
 enableDiscoveryDaemon: false
-discoveryDaemonInterval: 60m
+discoverDaemonInterval: 60m
 cephCommandsTimeoutSeconds: "15"
 useOperatorHostNetwork:
 scaleDownOperator: false
@@ -250,3 +234,46 @@ obcProvisionerNamePrefix:
 obcAllowAdditionalConfigFields: "maxObjects,maxSize"
 monitoring:
   enabled: false
+
+# --- [ 추가된 커스텀 설정 시작 ] ---
+
+# -- Ceph 클러스터 정의 (CephCluster CRD) --
+cephClusterSpec:
+  cephVersion:
+    image: "quay.io/ceph/ceph:v18.2.4"
+  dataDirHostPath: /var/lib/rook
+  mon:
+    count: 3
+    allowMultiplePerNode: true
+  storage:
+    useAllNodes: true
+    useAllDevices: false
+    deviceFilter: "sdb" # 'lsblk'로 확인한 디스크 이름으로 변경 (예: "sdb")
+    resources:
+      limits:
+        cpu: "500m"
+        memory: "1Gi"
+      requests:
+        cpu: "100m"
+        memory: "512Mi"
+
+# -- Ceph Block Pool 정의 (CephBlockPool CRD) --
+cephBlockPools:
+  - name: replicapool
+    namespace: rook-ceph
+    replicated:
+      size: 3
+    failureDomain: host
+
+# -- StorageClass 정의 --
+storageClass:
+  enabled: true
+  name: rook-ceph-block
+  reclaimPolicy: Retain
+  allowVolumeExpansion: true
+  mountOptions: []
+  parameters:
+    pool: replicapool
+    clusterID: rook-ceph-cluster
+    imageFeatures: layering
+    csi.storage.k8s.io/fstype: xfs
