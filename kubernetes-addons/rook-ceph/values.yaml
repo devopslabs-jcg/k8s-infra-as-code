@@ -1,14 +1,18 @@
-# k8s-infra-as-code/kubernetes-addons/rook-ceph/values.yaml
+# deployment.yaml이 요구하는 값
+# false: operator pod 1개 실행 (정상 상태)
+scaleDownOperator: false
+
+# aggregate-roles.yaml이 요구하는 값
+# Object Bucket Claim(OBC) 기능에 대한 RBAC 역할을 생성할지 여부
+# 특별히 사용하지 않는다면 false로 두는 것이 안전합니다.
+rbacAggregate:
+  enableOBCs: false
+
 # -- Helm Chart의 기본 설정 --
 image:
   repository: quay.io/rook/ceph
   tag: v1.14.3
   pullPolicy: IfNotPresent
-
-# replicas를 제어하는 scaleDownOperator 값을 명시적으로 false로 설정
-# false: operator pod 1개 실행 (정상 상태)
-# true: operator pod 0개 실행 (일시 중지)
-scaleDownOperator: false
 
 crds:
   enabled: true
