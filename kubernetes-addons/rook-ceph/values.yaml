@@ -1,16 +1,8 @@
-# k8s-infra-as-code/kubernetes-addons/rook-ceph/values-corrected.yaml
-#
-# ====================================================================
-#  [최종 수정본] 모든 YAML 구문 및 템플릿 오류가 해결되었습니다.
-#  - 1. 잘못된 'rbacAggregate' 설정을 제거하여 'expected bool' 오류 해결
-#  - 2. 모든 들여쓰기를 표준 공백으로 교체하여 파싱 오류 해결
-#  - 3. 모든 리스트(list) 및 맵(map) 구조를 검증
-# ====================================================================
-
+# k8s-infra-as-code/kubernetes-addons/rook-ceph/values.yaml
 # -- Helm Chart의 기본 설정 --
 image:
   repository: quay.io/rook/ceph
-  tag: v1.14.3 # Ceph v18(Reef)과 호환되는 안정적인 Rook Operator 버전
+  tag: v1.14.3
   pullPolicy: IfNotPresent
 
 crds:
@@ -48,7 +40,7 @@ csi:
   enableRbdDriver: true
   enableCephfsDriver: true
   nfs:
-    enabled: false # NFS CSI 드라이버 비활성화
+    enabled: false
   provisionerReplicas: 2
   enableCephfsSnapshotter: true
   enableRBDSnapshotter: true
@@ -57,7 +49,7 @@ csi:
   provisionerPriorityClassName: system-cluster-critical
   rbdFSGroupPolicy: "File"
   cephFSFSGroupPolicy: "File"
-  logLevel: "0" # CSI 사이드카 로그 레벨 (문자열 "0"이 올바른 값)
+  logLevel: "0"
 
   # -- CSI RBD 리소스 요청/제한 --
   csiRBDProvisionerResources:
