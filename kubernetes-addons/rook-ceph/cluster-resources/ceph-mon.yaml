@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: ceph-mon
+  namespace: rook-ceph
+  labels:
+    app: rook-ceph-mon
+spec:
+  clusterIP: None        # headless service, DNS SRV 지원을 위해
+  selector:
+    app: rook-ceph-mon
+  ports:
+    - name: mon
+      port: 6789
+      protocol: TCP
+      targetPort: 6789
+    - name: msgr
+      port: 3300
+      protocol: TCP
+      targetPort: 3300
+
