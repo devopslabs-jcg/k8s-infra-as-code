@@ -1,0 +1,18 @@
+# rook-ceph-cluster.yaml
+apiVersion: ceph.rook.io/v1
+kind: CephCluster
+metadata:
+  name: rook-ceph-cluster
+  namespace: rook-ceph
+spec:
+  # Rook Operator가 사용할 Ceph 이미지 버전을 지정합니다.
+  cephVersion:
+    image: "quay.io/ceph/ceph:v18.2.4" 
+  dataDirHostPath: /var/lib/rook
+  mon:
+    count: 3
+    allowMultiplePerNode: true
+  storage:
+    useAllNodes: true
+    useAllDevices: false
+    deviceFilter: "sdb" # 'lsblk'로 확인한 디스크 이름으로 변경 (예: "sdb")

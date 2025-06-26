@@ -1,0 +1,50 @@
+# k8s-infra-as-code/kubernetes-addons/rook-ceph/values.yaml
+# Rook-Ceph Helm Chart의 커스텀 values 파일입니다.
+
+# -- Ceph 클러스터 정의 (CephCluster CRD) --
+cephClusterSpec:
+  # Rook Operator가 사용할 Ceph 이미지 버전을 지정합니다.
+  cephVersion:
+    image: "quay.io/ceph/ceph:v18.2.4"
+  # Rook의 메타데이터가 저장될 경로입니다.
+  dataDirHostPath: /var/lib/rook
+  # Ceph 모니터(Monitor) 설정을 정의합니다.
+  mon:
+    count: 3
+    allowMultiplePerNode: true
+  # Ceph OSDs (Object Storage Daemons)에 사용할 스토리지를 정의합니다.
+  storage:
+    useAllNodes: true
+    useAllDevices: false
+    deviceFilter: "sdb" # <-- 'lsblk'로 확인한 디스크 이름으로 변경 (예: "sdb")
+    # OSDs에 대한 리소스 요청 및 제한을 정의합니다. (버전 호환성을 위해 제거하지 않습니다.)
+    resources:
+      limits:
+        cpu: "500m"
+        memory: "1Gi"
+      requests:
+        cpu: "100m"
+        memory: "512Mi"
+
+# -- Ceph Block Pool 정의 (CephBlockPool CRD) --
+# StorageClass가 사용할 스토리지 풀을 정의합니다.
+cephBlockPools:
+  - name: replicapool
+    namespace: rook-ceph
+    replicated:
+      size: 3 # 데이터 복제본 수 (노드 수에 맞게 설정)
+    failureDomain: host
+
+# -- StorageClass 정의 --
+# 이 StorageClass를 통해 Kubernetes 애플리케이션이 Ceph 스토리지를 사용합니다.
+storageClass:
+  enabled: true
+  name: rook-ceph-block # <-- Elasticsearch values.yaml에서 참조할 이름
+  reclaimPolicy: Retain
+  allowVolumeExpansion: true
+  mountOptions: []
+  parameters:
+    pool: replicapool
+    clusterID: rook-ceph-cluster
+    imageFeatures: layering
+    csi.storage.k8s.io/fstype: xfs
