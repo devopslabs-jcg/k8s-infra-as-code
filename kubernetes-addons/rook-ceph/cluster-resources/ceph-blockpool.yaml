@@ -1,0 +1,10 @@
+apiVersion: ceph.rook.io/v1
+kind: CephBlockPool
+metadata:
+  name: replicapool
+  namespace: rook-ceph
+spec:
+  failureDomain: host
+  replicated:
+    # 현재 노드가 2대이므로 복제본 수를 2로 설정.
+    size: 2

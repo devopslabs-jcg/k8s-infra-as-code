@@ -5,14 +5,12 @@ metadata:
   namespace: rook-ceph
 spec:
   cephVersion:
-    # Ceph v18.2.7 (Reef) 버전을 사용합니다.
     image: quay.io/ceph/ceph:v18.2.7
   
   dataDirHostPath: /var/lib/rook
 
   mon:
-    count: 3
-    # [중요] 사용 가능한 노드가 2대이므로, 하나의 노드에 여러 개의 mon이 배치될 수 있도록 허용.
+    count: 2
     allowMultiplePerNode: true
   
   mgr:
@@ -26,15 +24,31 @@ spec:
   monitoring:
     enabled: false
 
-  crashCollector:
-    disable: false
+  # [중요] mon과 osd의 placement 설정 추가
+  placement:
+    mon:
+      # 마스터 노드의 'NoSchedule' 테인트를 용인(tolerate)하도록 설정
+      tolerations:
+      - key: "node-role.kubernetes.io/master"
+        operator: "Exists"
+        effect: "NoSchedule"
+      - key: "node-role.kubernetes.io/control-plane"
+        operator: "Exists"
+        effect: "NoSchedule"
+    osd:
+      nodeAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          nodeSelectorTerms:
+          - matchExpressions:
+            # OSD는 마스터 노드를 제외하고 배치
+            - key: node-role.kubernetes.io/master
+              operator: DoesNotExist
+            - key: node-role.kubernetes.io/control-plane
+              operator: DoesNotExist
 
   storage:
-    # [수정] true로 설정하여 모든 노드에서 sdb 디스크를 찾음.
     useAllNodes: true
-    # [수정] false로 설정하여 모든 디스크를 자동으로 사용하는 것을 방지.
     useAllDevices: false
-    # [수정] 'sdb' 라는 이름의 디스크만 OSD로 사용하도록 정확히 지정.
     deviceFilter: "sdb"
 
   disruptionManagement:
