@@ -31,6 +31,7 @@ containerSecurityContext:
   capabilities:
     drop: ["ALL"]
 allowLoopDevices: false
+
 # -- CSI 드라이버 및 사이드카 설정 --
 csi:
   enableRbdDriver: true
@@ -222,6 +223,9 @@ csi:
           cpu: 50m
         limits:
           memory: 256Mi
+  # --- [ nfs 관련 설정이 이 위치로 이동했습니다. ] ---
+  nfs: # <-- 이 섹션 전체가 'csi' 블록 안으로 이동했다.
+    enabled: false
   cephFSAttachRequired: true
   rbdAttachRequired: true
   nfsAttachRequired: true
@@ -244,7 +248,7 @@ monitoring:
 cephClusterSpec:
   cephVersion:
     image: "quay.io/ceph/ceph:v18.2.4"
-  dataDirHostPath: /var/lib/rook # <-- 경로 수정
+  dataDirHostPath: /var/lib/rock
   mon:
     count: 3
     allowMultiplePerNode: true
@@ -262,19 +266,19 @@ cephClusterSpec:
 # -- Ceph Block Pool 정의 (CephBlockPool CRD) --
 cephBlockPools:
   - name: replicapool
-    namespace: rook-ceph # <-- 'rook'으로 유지
+    namespace: rock-ceph
     replicated:
       size: 3
     failureDomain: host
 # -- StorageClass 정의 --
 storageClass:
   enabled: true
-  name: rook-ceph-block # <-- 'rook'으로 유지
+  name: rock-ceph-block
   reclaimPolicy: Retain
   allowVolumeExpansion: true
   mountOptions: []
   parameters:
     pool: replicapool
-    clusterID: rook-ceph-cluster # <-- 'rook'으로 유지
+    clusterID: rock-ceph-cluster
     imageFeatures: layering
     csi.storage.k8s.io/fstype: xfs
