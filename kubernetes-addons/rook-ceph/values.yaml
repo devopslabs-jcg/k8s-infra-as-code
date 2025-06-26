@@ -5,6 +5,11 @@ image:
   tag: v1.14.3
   pullPolicy: IfNotPresent
 
+# replicas를 제어하는 scaleDownOperator 값을 명시적으로 false로 설정
+# false: operator pod 1개 실행 (정상 상태)
+# true: operator pod 0개 실행 (일시 중지)
+scaleDownOperator: false
+
 crds:
   enabled: true
 
