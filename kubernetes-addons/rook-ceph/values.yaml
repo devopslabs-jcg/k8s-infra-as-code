@@ -1,17 +1,28 @@
 # k8s-infra-as-code/kubernetes-addons/rook-ceph/values-corrected.yaml
-# -- 이 부분은 Helm Chart의 기본 설정이다. --
+#
+# ====================================================================
+#  NOTE: All indentation and syntax issues have been corrected.
+#  - Replaced all non-breaking spaces with regular spaces.
+#  - Removed the invalid 'rbacAggregate' top-level key.
+#  - Verified the structure of all lists and maps.
+# ====================================================================
+
+# -- Helm Chart의 기본 설정 --
 image:
-  repository: quay.io/rook/ceph
-  tag: v1.14.3 # Ceph v18(Reef)과 호환되는 안정적인 Rook Operator 버전으로 수정
-  pullPolicy: IfNotPresent
+  repository: quay.io/rook/ceph
+  tag: v1.14.3 # Ceph v18(Reef)과 호환되는 안정적인 Rook Operator 버전
+  pullPolicy: IfNotPresent
+
 crds:
-  enabled: true
+  enabled: true
+
 resources:
-  limits:
-    memory: 512Mi
-  requests:
-    cpu: 200m
-    memory: 128Mi
+  limits:
+    memory: 512Mi
+  requests:
+    cpu: 200m
+    memory: 128Mi
+
 nodeSelector: {}
 tolerations: []
 unreachableNodeTolerationSeconds: 5
@@ -20,143 +31,141 @@ operatorPodLabels: {}
 annotations: {}
 logLevel: INFO
 rbacEnable: true
-# rbacAggregate: # <-- 이 부분을 주석 처리하거나 삭제합니다.
-#   enableOBCs: false # <-- 이 부분을 주석 처리하거나 삭제합니다.
 pspEnable: false
 priorityClassName: ""
+
 containerSecurityContext:
-  runAsNonRoot: true
-  runAsUser: 2016
-  runAsGroup: 2016
-  capabilities:
-    drop: ["ALL"]
+  runAsNonRoot: true
+  runAsUser: 2016
+  runAsGroup: 2016
+  capabilities:
+    drop: ["ALL"]
+
 allowLoopDevices: false
 
 # -- CSI 드라이버 및 사이드카 설정 --
 csi:
-  enableRbdDriver: true
-  enableCephfsDriver: true
-  # enableNFSDriver는 rook-ceph helm chart에서 지원하지 않을 수 있습니다. 필요시 별도 확인이 필요합니다.
-  # NFS CSI 드라이버 관련 템플릿 렌더링 오류를 해결하기 위해 아래 필드를 추가합니다.
-  nfs:
-    enabled: false # NFS CSI 드라이버를 사용하지 않을 경우 false로 설정
+  enableRbdDriver: true
+  enableCephfsDriver: true
+  nfs:
+    enabled: false # NFS CSI 드라이버 비활성화
   provisionerReplicas: 2
-  enableCephfsSnapshotter: true
-  enableRBDSnapshotter: true
-  enableVolumeGroupSnapshot: true
-  pluginPriorityClassName: system-node-critical
-  provisionerPriorityClassName: system-cluster-critical
-  rbdFSGroupPolicy: "File"
-  cephFSFSGroupPolicy: "File"
-  logLevel: "0" # csi sidecar log level - changed from 0 to "0"
+  enableCephfsSnapshotter: true
+  enableRBDSnapshotter: true
+  enableVolumeGroupSnapshot: true
+  pluginPriorityClassName: system-node-critical
+  provisionerPriorityClassName: system-cluster-critical
+  rbdFSGroupPolicy: "File"
+  cephFSFSGroupPolicy: "File"
+  logLevel: "0" # CSI 사이드카 로그 레벨 (문자열 "0"이 올바른 값)
 
-  # -- CSI RBD 리소스 요청/제한 --
-  csiRBDProvisionerResources:
-    - name: csi-provisioner
-      resources:
-        requests:
-          memory: 128Mi
-          cpu: 100m
-        limits:
-          memory: 256Mi
-    - name: csi-resizer
-      resources:
-        requests:
-          memory: 128Mi
-          cpu: 100m
-        limits:
-          memory: 256Mi
-    - name: csi-attacher
-      resources:
-        requests:
-          memory: 128Mi
-          cpu: 100m
-        limits:
-          memory: 256Mi
-    - name: csi-snapshotter
-      resources:
-        requests:
-          memory: 128Mi
-          cpu: 100m
-        limits:
-          memory: 256Mi
-  
-  csiRBDPluginResources:
-    - name: csi-rbdplugin
-      resources:
-        requests:
-          memory: 512Mi
-          cpu: 250m
-        limits:
-          memory: 1Gi
-    - name: driver-registrar
-      resources:
-        requests:
-          memory: 128Mi
-          cpu: 50m
-        limits:
-          memory: 256Mi
-    - name: liveness-prometheus
-      resources:
-        requests:
-          memory: 128Mi
-          cpu: 50m
-        limits:
-          memory: 256Mi
+  # -- CSI RBD 리소스 요청/제한 --
+  csiRBDProvisionerResources:
+    - name: csi-provisioner
+      resources:
+        requests:
+          memory: 128Mi
+          cpu: 100m
+        limits:
+          memory: 256Mi
+    - name: csi-resizer
+      resources:
+        requests:
+          memory: 128Mi
+          cpu: 100m
+        limits:
+          memory: 256Mi
+    - name: csi-attacher
+      resources:
+        requests:
+          memory: 128Mi
+          cpu: 100m
+        limits:
+          memory: 256Mi
+    - name: csi-snapshotter
+      resources:
+        requests:
+          memory: 128Mi
+          cpu: 100m
+        limits:
+          memory: 256Mi
 
-  # -- CSI CephFS 리소스 요청/제한 --
-  csiCephFSProvisionerResources:
-    - name: csi-provisioner
-      resources:
-        requests:
-          memory: 128Mi
-          cpu: 100m
-        limits:
-          memory: 256Mi
-    - name: csi-resizer
-      resources:
-        requests:
-          memory: 128Mi
-          cpu: 100m
-        limits:
-          memory: 256Mi
-    - name: csi-attacher
-      resources:
-        requests:
-          memory: 128Mi
-          cpu: 100m
-        limits:
-          memory: 256Mi
-    - name: csi-snapshotter
-      resources:
-        requests:
-          memory: 128Mi
-          cpu: 100m
-        limits:
-          memory: 256Mi
+  csiRBDPluginResources:
+    - name: csi-rbdplugin
+      resources:
+        requests:
+          memory: 512Mi
+          cpu: 250m
+        limits:
+          memory: 1Gi
+    - name: driver-registrar
+      resources:
+        requests:
+          memory: 128Mi
+          cpu: 50m
+        limits:
+          memory: 256Mi
+    - name: liveness-prometheus
+      resources:
+        requests:
+          memory: 128Mi
+          cpu: 50m
+        limits:
+          memory: 256Mi
 
-  csiCephFSPluginResources:
-    - name: csi-cephfsplugin
-      resources:
-        requests:
-          memory: 512Mi
-          cpu: 250m
-        limits:
-          memory: 1Gi
-    - name: driver-registrar
-      resources:
-        requests:
-          memory: 128Mi
-          cpu: 50m
-        limits:
-          memory: 256Mi
-    - name: liveness-prometheus
-      resources:
-        requests:
-          memory: 128Mi
-          cpu: 50m
-        limits:
-          memory: 256Mi
-          
+  # -- CSI CephFS 리소스 요청/제한 --
+  csiCephFSProvisionerResources:
+    - name: csi-provisioner
+      resources:
+        requests:
+          memory: 128Mi
+          cpu: 100m
+        limits:
+          memory: 256Mi
+    - name: csi-resizer
+      resources:
+        requests:
+          memory: 128Mi
+          cpu: 100m
+        limits:
+          memory: 256Mi
+    - name: csi-attacher
+      resources:
+        requests:
+          memory: 128Mi
+          cpu: 100m
+        limits:
+          memory: 256Mi
+    - name: csi-snapshotter
+      resources:
+        requests:
+          memory: 128Mi
+          cpu: 100m
+        limits:
+          memory: 256Mi
+
+  csiCephFSPluginResources:
+    - name: csi-cephfsplugin
+      resources:
+        requests:
+          memory: 512Mi
+          cpu: 250m
+        limits:
+          memory: 1Gi
+    - name: driver-registrar
+      resources:
+        requests:
+          memory: 128Mi
+          cpu: 50m
+        limits:
+          memory: 256Mi
+    - name: liveness-prometheus
+      resources:
+        requests:
+          memory: 128Mi
+          cpu: 50m
+        limits:
+          memory: 256Mi
+
 monitoring:
-  enabled: false
+  enabled: false
