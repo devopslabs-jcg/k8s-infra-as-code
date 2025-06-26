@@ -1,4 +1,4 @@
-# k8s-infra-as-code/kubernetes-addons/rook-ceph/values.yaml
+# k8s-infra-as-code/kubernetes-addons/rook-ceph/values-corrected.yaml
 # -- 이 부분은 Helm Chart의 기본 설정이다. --
 image:
   repository: quay.io/rook/ceph
@@ -48,7 +48,7 @@ csi:
   provisionerPriorityClassName: system-cluster-critical
   rbdFSGroupPolicy: "File"
   cephFSFSGroupPolicy: "File"
-  logLevel: 0 # csi sidecar log level
+  logLevel: "0" # csi sidecar log level - changed from 0 to "0"
 
   # -- CSI RBD 리소스 요청/제한 --
   csiRBDProvisionerResources:
