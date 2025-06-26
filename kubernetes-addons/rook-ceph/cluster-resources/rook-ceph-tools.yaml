@@ -1,0 +1,175 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    deployment.kubernetes.io/revision: "1"
+  creationTimestamp: "2025-06-26T18:03:54Z"
+  generation: 1
+  labels:
+    app: rook-ceph-tools
+  name: rook-ceph-tools
+  namespace: rook-ceph
+  resourceVersion: "479211"
+  uid: 3bf9f0bf-bb18-4610-96a8-f6785d597251
+spec:
+  progressDeadlineSeconds: 600
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: rook-ceph-tools
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: rook-ceph-tools
+    spec:
+      containers:
+      - command:
+        - /bin/bash
+        - -c
+        - |
+          # Replicate the script from toolbox.sh inline so the ceph image
+          # can be run directly, instead of requiring the rook toolbox
+          CEPH_CONFIG="/etc/ceph/ceph.conf"
+          MON_CONFIG="/etc/rook/mon-endpoints"
+          KEYRING_FILE="/etc/ceph/keyring"
+
+          # create a ceph config file in its default location so ceph/rados tools can be used
+          # without specifying any arguments
+          write_endpoints() {
+            endpoints=$(cat ${MON_CONFIG})
+
+            # filter out the mon names
+            # external cluster can have numbers or hyphens in mon names, handling them in regex
+            # shellcheck disable=SC2001
+            mon_endpoints=$(echo "${endpoints}"| sed 's/[a-z0-9_-]\+=//g')
+
+            DATE=$(date)
+            echo "$DATE writing mon endpoints to ${CEPH_CONFIG}: ${endpoints}"
+              cat <<EOF > ${CEPH_CONFIG}
+          [global]
+          mon_host = ${mon_endpoints}
+
+          [client.admin]
+          keyring = ${KEYRING_FILE}
+          EOF
+          }
+
+          # watch the endpoints config file and update if the mon endpoints ever change
+          watch_endpoints() {
+            # get the timestamp for the target of the soft link
+            real_path=$(realpath ${MON_CONFIG})
+            initial_time=$(stat -c %Z "${real_path}")
+            while true; do
+              real_path=$(realpath ${MON_CONFIG})
+              latest_time=$(stat -c %Z "${real_path}")
+
+              if [[ "${latest_time}" != "${initial_time}" ]]; then
+                write_endpoints
+                initial_time=${latest_time}
+              fi
+
+              sleep 10
+            done
+          }
+
+          # read the secret from an env var (for backward compatibility), or from the secret file
+          ceph_secret=${ROOK_CEPH_SECRET}
+          if [[ "$ceph_secret" == "" ]]; then
+            ceph_secret=$(cat /var/lib/rook-ceph-mon/secret.keyring)
+          fi
+
+          # create the keyring file
+          cat <<EOF > ${KEYRING_FILE}
+          [${ROOK_CEPH_USERNAME}]
+          key = ${ceph_secret}
+          EOF
+
+          # write the initial config file
+          write_endpoints
+
+          # continuously update the mon endpoints if they fail over
+          watch_endpoints
+        env:
+        - name: ROOK_CEPH_USERNAME
+          valueFrom:
+            secretKeyRef:
+              key: ceph-username
+              name: rook-ceph-mon
+        image: quay.io/ceph/ceph:v19
+        imagePullPolicy: IfNotPresent
+        name: rook-ceph-tools
+        resources: {}
+        securityContext:
+          capabilities:
+            drop:
+            - ALL
+          runAsGroup: 2016
+          runAsNonRoot: true
+          runAsUser: 2016
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        tty: true
+        volumeMounts:
+        - mountPath: /etc/ceph
+          name: ceph-config
+        - mountPath: /etc/rook
+          name: mon-endpoint-volume
+        - mountPath: /var/lib/rook-ceph-mon
+          name: ceph-admin-secret
+          readOnly: true
+      dnsPolicy: ClusterFirstWithHostNet
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      serviceAccount: rook-ceph-default
+      serviceAccountName: rook-ceph-default
+      terminationGracePeriodSeconds: 30
+      tolerations:
+      - effect: NoExecute
+        key: node.kubernetes.io/unreachable
+        operator: Exists
+        tolerationSeconds: 5
+      volumes:
+      - name: ceph-admin-secret
+        secret:
+          defaultMode: 420
+          items:
+          - key: ceph-secret
+            path: secret.keyring
+          optional: false
+          secretName: rook-ceph-mon
+      - configMap:
+          defaultMode: 420
+          items:
+          - key: data
+            path: mon-endpoints
+          name: rook-ceph-mon-endpoints
+        name: mon-endpoint-volume
+      - emptyDir: {}
+        name: ceph-config
+status:
+  availableReplicas: 1
+  conditions:
+  - lastTransitionTime: "2025-06-26T18:03:54Z"
+    lastUpdateTime: "2025-06-26T18:08:02Z"
+    message: ReplicaSet "rook-ceph-tools-7b75b967db" has successfully progressed.
+    reason: NewReplicaSetAvailable
+    status: "True"
+    type: Progressing
+  - lastTransitionTime: "2025-06-26T19:56:47Z"
+    lastUpdateTime: "2025-06-26T19:56:47Z"
+    message: Deployment has minimum availability.
+    reason: MinimumReplicasAvailable
+    status: "True"
+    type: Available
+  observedGeneration: 1
+  readyReplicas: 1
+  replicas: 1
+  updatedReplicas: 1
