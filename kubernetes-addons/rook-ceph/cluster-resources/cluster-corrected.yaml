@@ -1,0 +1,67 @@
+# cluster-corrected.yaml
+# kubectl apply -f cluster-corrected.yaml 명령어로 배포합니다.
+apiVersion: ceph.rook.io/v1
+kind: CephCluster
+metadata:
+  name: rook-ceph
+  namespace: rook-ceph # Operator가 설치된 네임스페이스와 동일해야 합니다.
+spec:
+  cephVersion:
+    image: quay.io/ceph/ceph:v18.2.4
+    allowUnsupported: false
+  dataDirHostPath: /var/lib/rook
+  skipUpgradeChecks: false
+  mon:
+    count: 3
+    # 프로덕션 환경에서는 고가용성을 위해 각기 다른 노드에 mon을 배치해야 합니다.
+    allowMultiplePerNode: false
+  mgr:
+    count: 2
+    modules:
+    - name: rook
+      enabled: true
+  dashboard:
+    enabled: true
+    ssl: true
+  monitoring:
+    enabled: false # Prometheus Operator가 설치된 경우 true로 변경하여 사용
+    metricsDisabled: false
+  crashCollector:
+    disable: false
+  cleanupPolicy:
+    confirmation: "" # 클러스터 완전 삭제 시 "yes-really-destroy-data"로 변경
+  # OSD 데몬에 대한 리소스 설정
+  resources:
+    osd:
+      requests:
+        cpu: "100m"
+        memory: "512Mi"
+      limits:
+        cpu: "500m"
+        memory: "1Gi"
+  # 스토리지 구성: 장치(device) 기반으로 OSD를 생성합니다.
+  storage:
+    useAllNodes: true
+    useAllDevices: false
+    # 'lsblk' 명령어로 확인한 실제 사용 가능한 디스크 이름으로 변경해야 합니다.
+    # 예를 들어, 모든 sda, sdb, sdc... 디스크를 사용하려면 "^sd."와 같이 정규식을 사용할 수 있습니다.
+    deviceFilter: "sdb"
+    config:
+      # BlueStore OSD를 생성합니다.
+      storeType: bluestore
+  # critical한 Ceph 데몬들이 일반 Pod에 의해 제거되지 않도록 우선순위 클래스를 지정합니다.
+  priorityClassNames:
+    mon: system-node-critical
+    osd: system-node-critical
+    mgr: system-cluster-critical
+  disruptionManagement:
+    managePodBudgets: true
+    osdMaintenanceTimeout: 30
+  healthCheck:
+    daemonHealth:
+      mon:
+        interval: 45s
+      osd:
+        interval: 60s
+      status:
+        interval: 60s
