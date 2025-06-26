@@ -1,22 +1,17 @@
-# Default values for rook-ceph-operator
-# 이 파일은 Helm Chart의 기본 설정과 커스텀 설정을 모두 포함.
-
+# k8s-infra-as-code/kubernetes-addons/rook-ceph/rook-ceph/values.yaml
+# -- 이 부분은 Helm Chart의 기본 설정이다. --
 image:
   repository: docker.io/rook/ceph
   tag: v1.17.5
   pullPolicy: IfNotPresent
-
 crds:
   enabled: true
-
-# -- Pod resource requests & limits (Operator Pod의 리소스)
 resources:
   limits:
     memory: 512Mi
   requests:
     cpu: 200m
     memory: 128Mi
-
 nodeSelector: {}
 tolerations: []
 unreachableNodeTolerationSeconds: 5
@@ -36,29 +31,43 @@ containerSecurityContext:
   capabilities:
     drop: ["ALL"]
 allowLoopDevices: false
-
-# -- CSI 드라이버 및 사이드카 설정
+# -- CSI 드라이버 및 사이드카 설정 --
 csi:
-  # -- Enable Ceph CSI RBD driver
   enableRbdDriver: true
-  # -- Enable Ceph CSI CephFS driver
   enableCephfsDriver: true
-  # -- Disable the CSI driver.
   disableCsiDriver: "false"
-
-  # -- Enable host networking for CSI CephFS and RBD nodeplugins.
   enableCSIHostNetwork: true
-  # -- Enable Snapshotter in CSI provisioner pods
   enableCephfsSnapshotter: true
   enableNFSSnapshotter: true
   enableRBDSnapshotter: true
-  # ... (csi 섹션의 다른 설정들) ...
-
-  # -- NFS CSI Driver 설정 (이 부분이 'csi' 블록 안으로 이동했습니다)
-  nfs: # <-- 'nfs' 섹션의 위치를 수정
-    enabled: false # <-- Kibana 구성에 필요 없다면 false로 둡니다.
-
-  # -- CEPH CSI RBD provisioner resource requirement list
+  enablePluginSelinuxHostMount: false
+  enableCSIEncryption: false
+  enableVolumeGroupSnapshot: true
+  pluginPriorityClassName: system-node-critical
+  provisionerPriorityClassName: system-cluster-critical
+  rbdFSGroupPolicy: "File"
+  cephFSFSGroupPolicy: "File"
+  nfsFSGroupPolicy: "File"
+  enableOMAPGenerator: false
+  cephFSKernelMountOptions:
+  enableMetadata: false
+  provisionerReplicas: 2
+  clusterName:
+  logLevel: 0
+  sidecarLogLevel:
+  csiDriverNamePrefix:
+  rbdPluginUpdateStrategy:
+  rbdPluginUpdateStrategyMaxUnavailable:
+  cephFSPluginUpdateStrategy:
+  cephFSPluginUpdateStrategyMaxUnavailable:
+  nfsPluginUpdateStrategy:
+  grpcTimeoutInSeconds: 150
+  kubeApiBurst:
+  kubeApiQPS:
+  csiRBDPluginVolume:
+  csiRBDPluginVolumeMount:
+  csiCephFSPluginVolume:
+  csiCephFSPluginVolumeMount:
   csiRBDProvisionerResource: |
     - name : csi-provisioner
       resource:
@@ -108,7 +117,6 @@ csi:
           cpu: 50m
         limits:
           memory: 256Mi
-  csiRBDPluginResource: |
     - name : driver-registrar
       resource:
         requests:
@@ -130,7 +138,6 @@ csi:
           cpu: 50m
         limits:
           memory: 256Mi
-  csiCephFSProvisionerResource: |
     - name : csi-provisioner
       resource:
         requests:
@@ -173,7 +180,6 @@ csi:
           cpu: 50m
         limits:
           memory: 256Mi
-  csiNFSProvisionerResource: |
     - name : csi-provisioner
       resource:
         requests:
@@ -195,7 +201,6 @@ csi:
           cpu: 250m
         limits:
           memory: 1Gi
-  csiNFSPluginResource: |
     - name : driver-registrar
       resource:
         requests:
@@ -234,21 +239,19 @@ obcProvisionerNamePrefix:
 obcAllowAdditionalConfigFields: "maxObjects,maxSize"
 monitoring:
   enabled: false
-
 # --- [ 추가된 커스텀 설정 시작 ] ---
-
 # -- Ceph 클러스터 정의 (CephCluster CRD) --
 cephClusterSpec:
   cephVersion:
     image: "quay.io/ceph/ceph:v18.2.4"
-  dataDirHostPath: /var/lib/rook
+  dataDirHostPath: /var/lib/rook # <-- 경로 수정
   mon:
     count: 3
     allowMultiplePerNode: true
   storage:
     useAllNodes: true
     useAllDevices: false
-    deviceFilter: "sdb" # 'lsblk'로 확인한 디스크 이름으로 변경 (예: "sdb")
+    deviceFilter: "sdb" # 'lsblk'로 확인한 디스크 이름으로 변경한다.
     resources:
       limits:
         cpu: "500m"
@@ -256,24 +259,22 @@ cephClusterSpec:
       requests:
         cpu: "100m"
         memory: "512Mi"
-
 # -- Ceph Block Pool 정의 (CephBlockPool CRD) --
 cephBlockPools:
   - name: replicapool
-    namespace: rook-ceph
+    namespace: rook-ceph # <-- 'rook'으로 유지
     replicated:
       size: 3
     failureDomain: host
-
 # -- StorageClass 정의 --
 storageClass:
   enabled: true
-  name: rook-ceph-block
+  name: rook-ceph-block # <-- 'rook'으로 유지
   reclaimPolicy: Retain
   allowVolumeExpansion: true
   mountOptions: []
   parameters:
     pool: replicapool
-    clusterID: rook-ceph-cluster
+    clusterID: rook-ceph-cluster # <-- 'rook'으로 유지
     imageFeatures: layering
     csi.storage.k8s.io/fstype: xfs
