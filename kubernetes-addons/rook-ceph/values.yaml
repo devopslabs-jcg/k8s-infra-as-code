@@ -1,7 +1,7 @@
 # k8s-infra-as-code/kubernetes-addons/rook-ceph/values.yaml
 # -- 이 부분은 Helm Chart의 기본 설정이다. --
 image:
-  repository: docker.io/rook/ceph
+  repository: docker.io/ceph/ceph
   tag: v1.19.0
   pullPolicy: IfNotPresent
 crds:
