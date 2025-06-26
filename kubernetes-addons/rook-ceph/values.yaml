@@ -248,7 +248,7 @@ monitoring:
 cephClusterSpec:
   cephVersion:
     image: "quay.io/ceph/ceph:v18.2.4"
-  dataDirHostPath: /var/lib/rock
+  dataDirHostPath: /var/lib/rook
   mon:
     count: 3
     allowMultiplePerNode: true
@@ -266,19 +266,19 @@ cephClusterSpec:
 # -- Ceph Block Pool 정의 (CephBlockPool CRD) --
 cephBlockPools:
   - name: replicapool
-    namespace: rock-ceph
+    namespace: rook-ceph
     replicated:
       size: 3
     failureDomain: host
 # -- StorageClass 정의 --
 storageClass:
   enabled: true
-  name: rock-ceph-block
+  name: rook-ceph-block
   reclaimPolicy: Retain
   allowVolumeExpansion: true
   mountOptions: []
   parameters:
     pool: replicapool
-    clusterID: rock-ceph-cluster
+    clusterID: rook-ceph-cluster
     imageFeatures: layering
     csi.storage.k8s.io/fstype: xfs
