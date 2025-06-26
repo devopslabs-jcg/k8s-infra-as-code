@@ -1,10 +1,10 @@
 # k8s-infra-as-code/kubernetes-addons/rook-ceph/values-corrected.yaml
 #
 # ====================================================================
-#  NOTE: All indentation and syntax issues have been corrected.
-#  - Replaced all non-breaking spaces with regular spaces.
-#  - Removed the invalid 'rbacAggregate' top-level key.
-#  - Verified the structure of all lists and maps.
+#  [최종 수정본] 모든 YAML 구문 및 템플릿 오류가 해결되었습니다.
+#  - 1. 잘못된 'rbacAggregate' 설정을 제거하여 'expected bool' 오류 해결
+#  - 2. 모든 들여쓰기를 표준 공백으로 교체하여 파싱 오류 해결
+#  - 3. 모든 리스트(list) 및 맵(map) 구조를 검증
 # ====================================================================
 
 # -- Helm Chart의 기본 설정 --
