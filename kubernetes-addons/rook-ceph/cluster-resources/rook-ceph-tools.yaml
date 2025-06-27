@@ -1,7 +1,41 @@
 # ====================================================================
-#  [최종 수정본] initContainer를 사용하여 ceph.conf와 keyring을
-#  자동으로 완벽하게 생성하도록 수정한 버전입니다.
+#  [최후의 수정본] 확인된 데이터만 사용하고, fsid 참조를 완전히 제거하여
+#  모든 'FailedMount' 오류를 원천적으로 해결하는 최종 버전입니다.
 # ====================================================================
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: rook-ceph-tools
+  namespace: rook-ceph
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: rook-ceph-tools-role
+  namespace: rook-ceph
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  - configmaps
+  verbs:
+  - get
+  - list
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: rook-ceph-tools-binding
+  namespace: rook-ceph
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: rook-ceph-tools-role
+subjects:
+- kind: ServiceAccount
+  name: rook-ceph-tools
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -20,17 +54,13 @@ spec:
         app: rook-ceph-tools
     spec:
       dnsPolicy: ClusterFirst
-      # [중요] 올바른 ServiceAccount를 사용합니다.
       serviceAccountName: rook-ceph-tools
       containers:
       - name: rook-ceph-tools
-        # 클러스터와 동일한 버전의 ceph 이미지를 사용합니다.
         image: quay.io/ceph/ceph:v18.2.7
-        # 메인 컨테이너는 접속 대기를 위해 무한히 실행합니다.
         command: ["/bin/sleep", "infinity"]
         volumeMounts:
-          # initContainer가 생성한 설정 파일들을 /etc/ceph 디렉터리에 마운트합니다.
-          - name: ceph-config
+          - name: ceph-config-dir
             mountPath: /etc/ceph
       initContainers:
       - name: init-ceph-config
@@ -38,22 +68,21 @@ spec:
         command: ["/bin/bash", "-c"]
         args:
         - |
-          set -e
-          # 1. ConfigMap에서 mon 엔드포인트와 fsid를 가져옵니다.
-          MON_ENDPOINTS=$(cat /etc/rook-config/mon-endpoints)
-          FSID=$(cat /etc/rook-config/fsid)
+          set -ex
+          # [수정] mon 엔드포인트만 가져옵니다.
+          MON_ENDPOINTS_WITH_NAMES=$(cat /etc/rook-config/mon-endpoints)
+          MON_ENDPOINTS=$(echo "${MON_ENDPOINTS_WITH_NAMES}" | sed 's/[a-z0-9_-]\+=//g')
 
-          # 2. Secret에서 admin key를 가져옵니다.
-          ADMIN_KEY=$(cat /etc/rook-secret/key)
+          # [수정] admin key만 가져옵니다.
+          ADMIN_KEY=$(cat /etc/rook-admin-keyring/keyring)
 
-          # 3. fsid를 포함한 완전한 ceph.conf 파일을 생성합니다.
+          # [수정] fsid 없이 mon_host만으로 ceph.conf 파일을 생성합니다.
           cat << EOF > /etc/ceph-out/ceph.conf
           [global]
-          fsid = ${FSID}
           mon_host = ${MON_ENDPOINTS}
           EOF
 
-          # 4. ceph.client.admin.keyring 파일을 생성합니다.
+          # [수정] ceph.client.admin.keyring 파일은 그대로 생성합니다.
           cat << EOF > /etc/ceph-out/ceph.client.admin.keyring
           [client.admin]
           key = ${ADMIN_KEY}
@@ -63,36 +92,30 @@ spec:
           caps mgr = "allow *"
           EOF
         volumeMounts:
-          # 생성된 설정 파일을 공유 볼륨(/etc/ceph-out)에 저장합니다.
-          - name: ceph-config
+          - name: ceph-config-dir
             mountPath: /etc/ceph-out
-          # mon 엔드포인트 정보가 담긴 ConfigMap을 마운트합니다.
-          - name: mon-endpoints
+          - name: mon-endpoints-volume
             mountPath: /etc/rook-config
-          # admin key가 담긴 Secret을 마운트합니다.
-          - name: admin-secret
-            mountPath: /etc/rook-secret
+          - name: admin-keyring-volume
+            mountPath: /etc/rook-admin-keyring
       volumes:
-        # initContainer와 mainContainer가 설정 파일을 공유하기 위한 볼륨입니다.
-        - name: ceph-config
+        - name: ceph-config-dir
           emptyDir: {}
-        # mon 엔드포인트와 fsid가 담긴 정확한 ConfigMap을 참조합니다.
-        - name: mon-endpoints
+        # [수정] mon-endpoints ConfigMap에서는 'data' 키만 참조합니다.
+        - name: mon-endpoints-volume
           configMap:
             name: rook-ceph-mon-endpoints
             items:
               - key: data
                 path: mon-endpoints
-              - key: fsid
-                path: fsid
-        # 관리자 키가 담긴 정확한 Secret을 참조합니다.
-        - name: admin-secret
+        # [수정] fsid-volume 부분을 완전히 삭제했습니다.
+        # [수정] admin-keyring Secret에서는 'keyring' 키만 참조합니다.
+        - name: admin-keyring-volume
           secret:
             secretName: rook-ceph-admin-keyring
             items:
               - key: keyring
-                path: key
-      # 모든 노드에 배포될 수 있도록 Toleration을 추가합니다.
+                path: keyring
       tolerations:
         - key: "node-role.kubernetes.io/master"
           operator: "Exists"

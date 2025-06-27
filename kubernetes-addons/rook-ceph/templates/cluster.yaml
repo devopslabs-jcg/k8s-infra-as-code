@@ -5,8 +5,7 @@ metadata:
   namespace: rook-ceph
 spec:
   cephVersion:
-    # [가장 중요] Ceph 이미지 버전을 v18.2.2로 변경하여 환경 호환성 문제를 해결합니다.
-    image: quay.io/ceph/ceph:v18.2.2
+    image: quay.io/ceph/ceph:v17.2.6
   
   dataDirHostPath: /var/lib/rook
   mon:
@@ -31,8 +30,9 @@ spec:
     useAllNodes: false
     nodes:
     - name: "k8s-node-01"
-      config:
-        deviceFilter: "sdb"
+      useAllDevices: true
+      # config:
+          #  deviceFilter: "sdb"
   # ... (이전 파일의 resources, priorityClassNames 등 나머지 설정은 그대로 유지) ...
   disruptionManagement:
     managePodBudgets: true
