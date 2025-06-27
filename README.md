@@ -93,7 +93,6 @@ acm_certificate_arn = "arn:aws:acm:ap-northeast-2:123456789012:certificate/your-
 github_organization = "devopslabs-jcg"
 
 보안 경고: github_token 관리
-
 GitHub 토큰과 같은 민감 정보는 절대 코드에 직접 저장하면 안 된다. 아래 방법 중 하나를 사용하여 안전하게 토큰을 주입하는 것을 권장한다.
 
 방법 1: 환경 변수 사용 (가장 추천)
