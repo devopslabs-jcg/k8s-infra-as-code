@@ -5,7 +5,7 @@ metadata:
   namespace: rook-ceph
 spec:
   cephVersion:
-    image: quay.io/ceph/ceph:v19.2.0
+    image: quay.io/ceph/ceph:v19.2.0 # 19.2.2 최신버젼, 향후 Ubuntu24.04 test 
   
   dataDirHostPath: /var/lib/rook
   mon:

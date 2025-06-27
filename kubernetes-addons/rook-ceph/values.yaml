@@ -4,14 +4,13 @@ scaleDownOperator: false
 
 # aggregate-roles.yaml이 요구하는 값
 # Object Bucket Claim(OBC) 기능에 대한 RBAC 역할을 생성할지 여부
-# 특별히 사용하지 않는다면 false로 두는 것이 안전합니다.
 rbacAggregate:
   enableOBCs: false
 
 # -- Helm Chart의 기본 설정 --
 image:
   repository: quay.io/rook/ceph
-  tag: v1.17.5
+  tag: v1.17.5 # 현재 최신 버젼 
   pullPolicy: IfNotPresent
 
 crds:
