@@ -1,3 +1,14 @@
+#!/bin/bash
+# 이 스크립트는 서식이 완벽하게 보존된 README.md 파일을 생성합니다.
+
+# 기존 README.md 파일을 백업합니다 (선택 사항)
+if [ -f README.md ]; then
+    mv README.md README.md.bak
+    echo "기존 README.md 파일을 README.md.bak으로 백업했습니다."
+fi
+
+# 'Here Document'를 사용하여 README.md 파일 생성
+cat << 'EOF' > README.md
 # Multi-Cloud EKS & AKS 클러스터 인프라 (IaC)
 
 ## 1. 프로젝트 개요
@@ -15,22 +26,22 @@
 ```mermaid
 graph TD
     subgraph "인터넷"
-        A[사용자]
+        A["사용자"]
     end
 
     subgraph "AWS Cloud"
         subgraph "VPC"
             subgraph "Public Subnets"
-                C{Application <br> Load Balancer};
+                C{"Application <br> Load Balancer"};
             end
             subgraph "Private Subnets"
-                D[EKS 클러스터 <br> (Worker Nodes)];
-                D -- Ingress --> E[애플리케이션 Pods];
-                E <--> F[Rook-Ceph <br> (Persistent Storage)];
+                D["EKS 클러스터 <br> (Worker Nodes)"];
+                D -- Ingress --> E["애플리케이션 Pods"];
+                E <--> F["Rook-Ceph <br> (Persistent Storage)"];
             end
         end
-        B[Route 53] --> C;
-        C -- WAF 검사 --> D;
+        B["Route 53"] --> C;
+        C -- "WAF 검사" --> D;
     end
 
     A --> B;
@@ -163,3 +174,7 @@ graph TD
 -   **`aws/security`**: ALB에 AWS WAF를 연결하여 웹 공격으로부터 애플리케이션을 보호.
 -   **`azure/vnet`**: Azure의 가상 네트워크(VNet)와 서브넷을 구성.
 -   **`azure/aks`**: Azure 관리형 Kubernetes 서비스(AKS) 클러스터를 프로비저닝.
+EOF
+
+echo "✅ README.md 파일이 성공적으로 생성되었습니다."
+
