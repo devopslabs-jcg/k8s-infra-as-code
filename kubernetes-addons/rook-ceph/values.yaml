@@ -11,7 +11,7 @@ rbacAggregate:
 # -- Helm Chart의 기본 설정 --
 image:
   repository: quay.io/rook/ceph
-  tag: v1.12.9
+  tag: v1.17.5
   pullPolicy: IfNotPresent
 
 crds:
