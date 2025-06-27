@@ -32,12 +32,12 @@ graph TD
     subgraph "AWS Cloud"
         subgraph "VPC"
             subgraph "Public Subnets"
-                C{"Application <br> Load Balancer"};
+                C{"Application Load Balancer"};
             end
             subgraph "Private Subnets"
-                D["EKS 클러스터 <br> (Worker Nodes)"];
+                D["EKS 클러스터 (Worker Nodes)"];
                 D -- Ingress --> E["애플리케이션 Pods"];
-                E <--> F["Rook-Ceph <br> (Persistent Storage)"];
+                E <--> F["Rook-Ceph (Persistent Storage)"];
             end
         end
         B["Route 53"] --> C;
