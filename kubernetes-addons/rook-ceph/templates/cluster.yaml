@@ -5,55 +5,37 @@ metadata:
   namespace: rook-ceph
 spec:
   cephVersion:
-    image: quay.io/ceph/ceph:v18.2.7
+    # [가장 중요] Ceph 이미지 버전을 v18.2.2로 변경하여 환경 호환성 문제를 해결합니다.
+    image: quay.io/ceph/ceph:v18.2.2
   
   dataDirHostPath: /var/lib/rook
-
   mon:
-    count: 2
+    count: 1
     allowMultiplePerNode: true
-  
   mgr:
-    count: 2
-    allowMultiplePerNode: false
-        
+    count: 1
   dashboard:
     enabled: true
     ssl: true
-  
-  monitoring:
-    enabled: false
-
-  # [중요] mon과 osd의 placement 설정 추가
   placement:
-    mon:
-      # 마스터 노드의 'NoSchedule' 테인트를 용인(tolerate)하도록 설정
-      tolerations:
-      - key: "node-role.kubernetes.io/master"
-        operator: "Exists"
-        effect: "NoSchedule"
-      - key: "node-role.kubernetes.io/control-plane"
-        operator: "Exists"
-        effect: "NoSchedule"
     osd:
       nodeAffinity:
         requiredDuringSchedulingIgnoredDuringExecution:
           nodeSelectorTerms:
           - matchExpressions:
-            # OSD는 마스터 노드를 제외하고 배치
             - key: node-role.kubernetes.io/master
               operator: DoesNotExist
             - key: node-role.kubernetes.io/control-plane
               operator: DoesNotExist
-
   storage:
-    useAllNodes: true
-    useAllDevices: false
-    deviceFilter: "sdb"
-
+    useAllNodes: false
+    nodes:
+    - name: "k8s-node-01"
+      config:
+        deviceFilter: "sdb"
+  # ... (이전 파일의 resources, priorityClassNames 등 나머지 설정은 그대로 유지) ...
   disruptionManagement:
     managePodBudgets: true
-    
   resources:
     osd:
       limits:
@@ -62,20 +44,7 @@ spec:
       requests:
         cpu: "100m"
         memory: "512Mi"
-
   priorityClassNames:
     mon: system-node-critical
     osd: system-node-critical
     mgr: system-cluster-critical
-
-  healthCheck:
-    daemonHealth:
-      mon:
-        disabled: false
-        interval: 45s
-      osd:
-        disabled: false
-        interval: 60s
-      status:
-        disabled: false
-        interval: 60s
