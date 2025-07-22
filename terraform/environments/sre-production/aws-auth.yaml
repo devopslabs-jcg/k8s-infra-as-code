@@ -1,0 +1,12 @@
+# aws-auth.yaml 파일 내용 (로컬에서 작성)
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: aws-auth
+  namespace: kube-system
+data:
+  mapUsers: |
+    - userarn: arn:aws:iam::766496852787:user/terraform-admin
+      username: terraform-admin
+      groups:
+        - system:masters

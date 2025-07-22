@@ -32,3 +32,16 @@ module "eks" {
 # 보안을 위해 워커 노드를 Private Subnet에 두고 NAT 게이트웨이를 사용하는 것이 표준
   subnet_ids   = module.vpc.public_subnets
 }
+
+# Kubernetes Provider 설정
+provider "kubernetes" {
+  host                   = module.eks.cluster_endpoint # EKS 모듈의 cluster_endpoint 출력
+  cluster_ca_certificate = base64decode(module.eks.cluster_certificate_authority_data) # EKS 모듈의 CA 데이터 출력
+  token                  = data.aws_eks_cluster_auth.main.token # EKS 클러스터 인증 토큰
+}
+
+# EKS 클러스터 인증 토큰을 가져오기 위한 data source
+data "aws_eks_cluster_auth" "main" {
+  name = module.eks.cluster_name # EKS 모듈의 cluster_name 출력
+}
+
