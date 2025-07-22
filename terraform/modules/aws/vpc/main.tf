@@ -5,7 +5,7 @@ module "vpc" {
   name = var.cluster_name
   cidr = var.vpc_cidr
 
-  # 가용 영역과 서브넷 설정을 environments 에서 전달받음
+  # 가용 영역과 서브넷 설정 environments 에서 전달받음
   azs             = var.availability_zones
   private_subnets = var.private_subnets
   public_subnets  = var.public_subnets
