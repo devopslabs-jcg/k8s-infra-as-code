@@ -1,19 +1,24 @@
-resource "aws_eks_cluster" "main" {
-  name     = var.cluster_name
-  role_arn = var.cluster_role_arn
-  version  = "1.28"
-  vpc_config { subnet_ids = var.private_subnet_ids }
-}
-resource "aws_eks_node_group" "main" {
-  cluster_name    = aws_eks_cluster.main.name
-  node_group_name = "${var.cluster_name}-nodegroup"
-  node_role_arn   = var.node_role_arn
-  subnet_ids      = var.private_subnet_ids
-  instance_types  = ["t3.medium"]
-  scaling_config {
-    desired_size = 2
-    max_size     = 3
-    min_size     = 1
+module "eks" {
+  source  = "terraform-aws-modules/eks/aws"
+  version = "20.37.2"
+
+  cluster_name    = var.cluster_name
+  cluster_version = "1.29"
+
+  vpc_id     = var.vpc_id
+  subnet_ids = var.subnet_ids
+
+  # EKS 클러스터와 노드에 필요한 IAM 역할 자동 생성
+  create_iam_role = true
+
+  eks_managed_node_groups = {
+    sre_portfolio_group = {
+      min_size     = 1
+      max_size     = 2
+      desired_size = 1
+      instance_types = ["t3.micro"]
+    # instance_types = ["t3.medium"] # 스팟으로는 좀 더 큰 인스턴스를 저렴하게 사용
+    # capacity_type  = "SPOT" # 스팟 인스턴스 사용
+    }
   }
 }
-
