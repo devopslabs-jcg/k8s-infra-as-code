@@ -1,0 +1,15 @@
+apiVersion: networking.istio.io/v1beta1 # 또는 v1alpha3, 사용 중인 Istio 버전에 따라 다를 수 있음
+kind: Gateway
+metadata:
+  name: my-app-gateway # 게이트웨이 이름 (예: your-service-gateway)
+  namespace: my-app-namespace # 애플리케이션이 배포될 네임스페이스
+spec:
+  selector:
+    istio: ingressgateway # Istio의 기본 ingressgateway 파드에 적용
+  servers:
+  - port:
+      number: 80 # HTTP 트래픽 수신 포트
+      name: http
+      protocol: HTTP
+    hosts:
+    - "*" # 모든 호스트명 허용 (또는 "your-app.example.com"과 같은 특정 도메인)

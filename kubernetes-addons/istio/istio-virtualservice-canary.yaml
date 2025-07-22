@@ -1,0 +1,20 @@
+apiVersion: networking.istio.io/v1beta1 # 또는 v1alpha3
+kind: VirtualService
+metadata:
+  name: my-app-virtualservice # 가상 서비스 이름 (예: your-app-virtualservice)
+  namespace: my-app-namespace # 애플리케이션 네임스페이스
+spec:
+  hosts:
+  - "*" # 이 규칙이 적용될 호스트 (Gateway의 hosts와 일치하거나 더 구체적)
+  gateways:
+  - my-app-gateway # 위에서 정의한 Gateway에 바인딩
+  http:
+  - route: # HTTP 트래픽에 대한 라우팅 규칙
+    - destination: # 첫 번째 목적지: v1 버전
+        host: my-app # 라우팅할 Kubernetes Service 이름
+        subset: v1   # DestinationRule에서 정의한 서비스 서브셋
+      weight: 90     # 트래픽의 90%를 v1으로 라우팅
+    - destination: # 두 번째 목적지: v2 버전 (카나리)
+        host: my-app
+        subset: v2
+      weight: 10     # 트래픽의 10%를 v2으로 라우팅

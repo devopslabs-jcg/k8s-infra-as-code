@@ -1,0 +1,17 @@
+apiVersion: networking.istio.io/v1beta1 # 또는 v1alpha3
+kind: DestinationRule
+metadata:
+  name: my-app-destinationrule # 데스티네이션 룰 이름 (예: your-service-destinationrule)
+  namespace: my-app-namespace # 애플리케이션 네임스페이스
+spec:
+  host: my-app # 이 규칙이 적용될 Kubernetes Service 이름 (예: your-app-svc)
+  subsets:
+  - name: v1 # 첫 번째 서브셋: v1 버전
+    labels:
+      version: v1 # 이 레이블을 가진 Pod들로 구성 (Deployment의 Pod 레이블과 일치)
+  - name: v2 # 두 번째 서브셋: v2 버전
+    labels:
+      version: v2 # 이 레이블을 가진 Pod들로 구성
+  # - name: v3 # 세 번째 서브셋 (필요시)
+  #   labels:
+  #     version: v3
