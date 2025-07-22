@@ -41,12 +41,14 @@ graph TD
 ```
 .
 ├── kubernetes-addons/
-│   └── rook-ceph/      # Rook-Ceph 클러스터 배포를 위한 매니페스트
+│   ├── rook-ceph/      # 컨테이너 네이티브 스토리지 (Rook-Ceph) 매니페스트
+│   └── istio/          # Istio Service Mesh (Gateway, VirtualService, DestinationRule) 매니페스트
 └── terraform/
     ├── environments/
     │   ├── dev/        # 개발 환경 구성 (terraform apply 실행 위치)
     │   ├── stg/        # 스테이징 환경 구성
-    │   └── prod/       # 운영 환경 구성
+    │   ├── prod/       # 운영 환경 구성
+    │   └── sre-production/ # SRE 프로덕션 환경 구성 (terraform apply 실행 위치)
     └── modules/
         ├── aws/        # 재사용 가능한 AWS 인프라 모듈
         │   ├── alb/
@@ -133,15 +135,13 @@ graph TD
     ```bash
     terraform apply
     ```
-
-7.  **`kubectl` 설정**
-    배포 완료 후, 아래 명령어를 실행하여 로컬 `kubectl`이 클러스터를 제어할 수 있도록 설정한다.
-    ```bash
-    # AWS EKS
-    aws eks update-kubeconfig --region ap-northeast-2 --name my-eks-cluster
-
-    # Azure AKS
-    az aks get-credentials --resource-group <resource-group-name> --name <aks-cluster-name>
+7. **`kubectl` 설정 및 접근 권한 확보**
+   인프라 배포 완료 후, 로컬 `kubectl`이 클러스터를 제어할 수 있도록 아래 명령어를 실행한다.
+   ```bash
+   # AWS EKS
+   aws eks update-kubeconfig --region ap-northeast-2 --name my-eks-cluster
+   # Azure AKS
+   az aks get-credentials --resource-group <resource-group-name> --name <aks-cluster-name>
     ```
 
 8.  **Rook-Ceph 애드온 배포**
@@ -152,6 +152,15 @@ graph TD
     kubectl apply -f cluster.yaml
     kubectl apply -f storageclass.yaml
     ```
+
+9. **Istio Service Mesh 배포**
+   프로젝트 루트 디렉토리로 이동 후, Istio Service Mesh 관련 매니페스트를 적용한다.
+   ```bash
+   cd ../../../kubernetes-addons/istio
+   kubectl apply -f istio-gateway.yaml
+   kubectl apply -f istio-destinationrule.yaml
+   kubectl apply -f istio-virtualservice-canary.yaml
+   ```
 
 ## 6. Terraform 모듈 상세
 
